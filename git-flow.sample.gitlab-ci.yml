@@ -1,0 +1,97 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"      # Develop
+    - if: $CI_COMMIT_REF_NAME =~ /^feature\/.*/ # Feature branches
+    - if: $CI_COMMIT_TAG =~ /^v\d+.\d+.\d+$/    # Require tag with format e.g. v1.0.0
+
+default:
+  tags:
+    - sample-runner-tag
+  before_script:
+    - # Default behavior for each job
+
+.rules_tag:
+  before_script:
+    - # Example custom behavior for jobs which extend this template
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+.\d+.\d+$/    # Require tag with format e.g. v1.0.0
+
+.rules_tag_manual:
+  before_script:
+    - # Example custom behavior for jobs which extend this template
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop" || $CI_COMMIT_TAG =~ /^v\d+.\d+.\d+$/ # Devlop or Tag with format e.g. v1.0.0
+      when: manual
+      allow_failure: true
+
+.rules_develop:
+  before_script:
+    - # Example custom behavior for jobs which extend this template
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "develop"      # Develop
+
+.rules_feature:
+  before_script:
+    - # Example custom behavior for jobs which extend this template
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /^feature\/.*/ # Feature branches
+
+.rules_schedule_tests:
+  before_script:
+    - # Example custom behavior for jobs which extend this template
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"    # Schedule
+
+stages:
+  - build
+  - tests
+  - release
+  - deploy dev
+  - deploy test
+  - deploy prod
+  - e2e tests
+
+build:              # When? Always
+  stage: build
+  script:
+    - # Commands focused on build of project.
+
+unit tests:         # When? Always
+  stage: tests
+  script:
+    - # Commands focused on unit tests
+
+integration tests:  # When? Always
+  stage: tests
+  script:
+    - # Commands focused on integration tests
+
+release:            # When? Develop or Tags
+  stage: release
+  extend: .rules_develop .rules_tag
+  script:
+    - # Commands focused on prepare release (docker, nuget/npm, some artifacts)
+
+auto deploy dev:    # When? Develop or Tags
+  stage: deploy dev
+  extend: .rules_develop .rules_tag
+  script:
+    - # Commands focused on deployment to dev environment
+
+auto deploy test:   # When? Develop or Tags
+  stage: deploy test
+  extend: .rules_develop .rules_tag
+  script:
+    - # Commands focused on deployment to test environment
+
+deploy prod:        # When? Tags with manual approval
+  stage: deploy prod
+  extend: .rules_tag_manual
+  script:
+    - # Commands focused on deployment to production environment
+
+API tests:         # When? Manual or Schedule
+  stage: e2e tests
+  extend: .rules_schedule_tests
+  script:
+    - # Commands focused on e2e tests
